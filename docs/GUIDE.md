@@ -18,7 +18,7 @@ A step-by-step walkthrough: installing, reading the scan, cleaning, scheduling, 
 You need Windows 10 or 11. Windows PowerShell 5.1 and .NET Framework 4.x are already part of Windows. You don't need admin rights or an internet connection.
 
 **From the release zip**
-1. Download `ai-cache-cleaner-v2.0.1.zip` from the [Releases page](https://github.com/AlienEmperor604/OopSI/releases/latest).
+1. Download `ai-cache-cleaner-v2.0.2.zip` from the [Releases page](https://github.com/AlienEmperor604/OopSI/releases/latest).
 2. Right-click the zip, choose **Extract All**, and open the extracted `ai-cache-cleaner` folder.
 3. Double-click **install.cmd**.
 
@@ -31,8 +31,8 @@ cd OopSI
 
 The installer:
 - copies the tool to `%USERPROFILE%\.ai-cache-cleaner`
-- compiles a small launcher, `AI Cache Cleaner.exe`, from source inside the script, using the C# compiler built into Windows
-- puts an **AI Cache Cleaner** shortcut on your desktop
+- compiles a small launcher, `oopSI - AI Cache Cleaner.exe`, from source inside the script, using the C# compiler built into Windows
+- puts an **oopSI - AI Cache Cleaner** shortcut on your desktop
 - does **not** schedule anything; weekly auto-clean stays off until you turn it on
 
 When it finishes, the app opens.
@@ -97,7 +97,7 @@ Only one cleanup runs at a time. If the weekly auto-clean starts while another c
 <img src="screenshots/settings.png" alt="Settings page" width="820">
 
 **Weekly auto-clean** is off by default. Flip the switch to turn it on, then pick a day and time. It applies immediately:
-- it creates a Windows scheduled task named **AI Cache Cleaner** that runs `AI Cache Cleaner.exe -AutoClean`
+- it creates a Windows scheduled task named **AI Cache Cleaner** that runs `oopSI - AI Cache Cleaner.exe -AutoClean`
 - the task runs as you, with limited rights, only while you're logged on; if the PC was off at that time it runs at the next chance
 - it cleans the same caches you ticked on Home
 - **Last auto-clean** shows the result of the most recent run
@@ -131,10 +131,10 @@ The dry run ends with a **review by hand** list: the biggest models (Hugging Fac
 | Path | What |
 |---|---|
 | `%USERPROFILE%\.ai-cache-cleaner\ai-cache-cleaner.ps1` | the tool |
-| `%USERPROFILE%\.ai-cache-cleaner\AI Cache Cleaner.exe` | launcher compiled at install |
+| `%USERPROFILE%\.ai-cache-cleaner\oopSI - AI Cache Cleaner.exe` | launcher compiled at install |
 | `%USERPROFILE%\.ai-cache-cleaner\settings.json` | your ticks and Temp age: `{ "skip": [...], "tempDays": 7 }` |
 | `%USERPROFILE%\.ai-cache-cleaner\clean.log` | one line per cleanup |
-| Desktop `AI Cache Cleaner.lnk` | shortcut |
+| Desktop `oopSI - AI Cache Cleaner.lnk` | shortcut |
 | Task Scheduler `AI Cache Cleaner` | only if you turned on weekly auto-clean |
 
 ## 9. Troubleshooting
@@ -155,7 +155,7 @@ The app isn't installed yet (you opened the script directly). Run `install.cmd` 
 It only runs while you're logged on. Check **Last auto-clean** in Settings and `clean.log`; errors from scheduled runs are written there too.
 
 **Running inside a packaged AI desktop app**
-If an agent installed the tool from inside a Microsoft Store style app, open a normal terminal and check that `%USERPROFILE%\.ai-cache-cleaner\AI Cache Cleaner.exe` exists.
+If an agent installed the tool from inside a Microsoft Store style app, open a normal terminal and check that `%USERPROFILE%\.ai-cache-cleaner\oopSI - AI Cache Cleaner.exe` exists.
 
 ## 10. Uninstall
 

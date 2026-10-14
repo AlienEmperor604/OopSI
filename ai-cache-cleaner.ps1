@@ -1,5 +1,5 @@
 <#
-AI Cache Cleaner - frees disk space taken by regenerable AI / dev-tool caches on Windows:
+oopSI - AI Cache Cleaner: frees disk space taken by regenerable AI / dev-tool caches on Windows:
 uv (stale tool environments), npm, pnpm, pip, conda, old Temp files, Playwright browsers no project uses.
 Models, venvs and conda envs are never deleted; the dry run lists them for you to review.
 
@@ -18,14 +18,16 @@ param([switch]$Clean, [switch]$AutoClean, [switch]$Gui, [switch]$Install, [switc
   [ValidateRange(0, 23)][int]$Hour = 13,
   [ValidateRange(1, 365)][int]$TempDays)   # default: settings.json, else 7
 
-$Version = '2.0.1'
+$Version = '2.0.2'
 if (-not $HOME) { throw 'HOME is empty; refusing to run.' }
 # ponytail: not under AppData - packaged (MSIX) apps get AppData writes silently redirected to a private copy
 $AppDir = Join-Path $HOME '.ai-cache-cleaner'
 $LogPath = Join-Path $AppDir 'clean.log'
 $SettingsPath = Join-Path $AppDir 'settings.json'
 $TaskName = 'AI Cache Cleaner'
-$ExeName = 'AI Cache Cleaner.exe'
+$AppName = 'oopSI - AI Cache Cleaner'   # the desktop shortcut, the launcher exe and the window title
+$ExeName = "$AppName.exe"
+$OldName = 'AI Cache Cleaner'           # before 2.0.2; -Install and -Uninstall remove its shortcut and exe
 
 # Everything from here to Invoke-Cleaner also runs in the app's background runspace: use $env: variables only, no script variables.
 
@@ -398,7 +400,7 @@ if ($Test) {
     & $file "$t\NotTemp\old.txt" 9; & $dir "$t\NotTemp\left.aicc-del" 0
     & $expect 'temp outside a folder named Temp' (Get-OldItems "$t\NotTemp" 7) @()
     & $expect 'temp under Windows' (Get-OldItems "$env:SystemRoot\Temp\" 0) @()
-    & $dir "$t\links\Temp\real"; New-Item -ItemType Junction -Path "$t\links\Temp\link" -Target "$t\keep" | Out-Null
+    & $dir "$t\links\Temp\real" 1; New-Item -ItemType Junction -Path "$t\links\Temp\link" -Target "$t\keep" | Out-Null
     & $expect 'temp with a junction' (Get-OldItems "$t\links\Temp" 0) 'real'
 
     # Busy guards
@@ -437,7 +439,7 @@ if ($Test) {
 if ($Uninstall) {
   if ([IO.Path]::GetFileName($AppDir) -ne '.ai-cache-cleaner') { throw "Refusing to remove unexpected folder $AppDir" }
   Remove-Schedule
-  Remove-Item -LiteralPath (Join-Path ([Environment]::GetFolderPath('Desktop')) 'AI Cache Cleaner.lnk') -Force -ErrorAction SilentlyContinue
+  foreach ($n in $AppName, $OldName) { Remove-Item -LiteralPath (Join-Path ([Environment]::GetFolderPath('Desktop')) "$n.lnk") -Force -ErrorAction SilentlyContinue }
   Remove-Tree $AppDir
   if (Test-Path -LiteralPath $AppDir) { "Uninstalled, but some files in $AppDir are in use (is the app open?). Close it and run -Uninstall again." } else { 'Uninstalled.' }
   return
@@ -481,10 +483,12 @@ public static class Launcher {
   }
 }
 '@
-  $lnk = (New-Object -ComObject WScript.Shell).CreateShortcut((Join-Path ([Environment]::GetFolderPath('Desktop')) 'AI Cache Cleaner.lnk'))
+  # the names before 2.0.2 go: their shortcut and launcher (a task from then is re-pointed at the new exe below)
+  Remove-Item -LiteralPath (Join-Path ([Environment]::GetFolderPath('Desktop')) "$OldName.lnk"), (Join-Path $AppDir "$OldName.exe") -Force -ErrorAction SilentlyContinue
+  $lnk = (New-Object -ComObject WScript.Shell).CreateShortcut((Join-Path ([Environment]::GetFolderPath('Desktop')) "$AppName.lnk"))
   $lnk.TargetPath = $exe; $lnk.WorkingDirectory = $AppDir; $lnk.Description = 'Free disk space from AI / dev-tool caches'; $lnk.Save()
   "Installed to $AppDir"
-  "  app:      $exe (desktop shortcut 'AI Cache Cleaner')"
+  "  app:      $exe (desktop shortcut '$AppName')"
   # A task from an earlier version: an enabled one keeps its day and hour with the new -AutoClean action; a disabled one goes.
   $old = Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
   if ($old -and $old.State -ne 'Disabled') { $s = Get-Schedule; Set-Schedule $s.Day $s.Hour; '  schedule: weekly auto-clean kept, {0} {1:00}:00' -f $s.Day, $s.Hour }
@@ -533,7 +537,7 @@ public class CacheRow : INotifyPropertyChanged {
 '@
   [xml]$xaml = @'
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="AI Cache Cleaner" Width="1320" Height="1000" MinWidth="1080" MinHeight="640" WindowStartupLocation="CenterScreen"
+        Title="oopSI - AI Cache Cleaner" Width="1320" Height="1000" MinWidth="1080" MinHeight="640" WindowStartupLocation="CenterScreen"
         FontFamily="{DynamicResource Body}" FontSize="14" Foreground="#111827" UseLayoutRounding="True"
         TextOptions.TextFormattingMode="Ideal" TextOptions.TextRenderingMode="ClearType">
   <Window.Resources>
@@ -1202,7 +1206,7 @@ public class CacheRow : INotifyPropertyChanged {
   $applySched = {
     if ($st.Loading) { return }
     try { if ($ui.SchedSwitch.IsChecked) { Set-Schedule $ui.SchedDay.SelectedItem $ui.SchedHour.SelectedIndex } else { Remove-Schedule } }
-    catch { [void][Windows.MessageBox]::Show($w, "Couldn't change the weekly auto-clean:`n`n$_", 'AI Cache Cleaner') }
+    catch { [void][Windows.MessageBox]::Show($w, "Couldn't change the weekly auto-clean:`n`n$_", $AppName) }
     & $loadSched
   }
 
@@ -1297,13 +1301,13 @@ public class CacheRow : INotifyPropertyChanged {
 
   $confirmClean = {
     $msg = "Delete the ticked caches ({0:N2} GB)?`n`nAnything in use is skipped, and tools re-download what they need. Models, venvs and conda envs are never touched." -f ((& $selectedBytes) / 1GB)
-    if ([Windows.MessageBox]::Show($w, $msg, 'AI Cache Cleaner', 'YesNo', 'Question') -eq 'Yes') { & $start $true }
+    if ([Windows.MessageBox]::Show($w, $msg, $AppName, 'YesNo', 'Question') -eq 'Yes') { & $start $true }
   }
   $ui.BtnClean.Add_Click($confirmClean); $ui.BtnClean2.Add_Click($confirmClean)
   $ui.BtnScan.Add_Click({ & $start $false })
   $ui.BtnLog.Add_Click({
       if (Test-Path -LiteralPath $LogPath) { Start-Process -FilePath "$env:SystemRoot\System32\notepad.exe" -ArgumentList "`"$LogPath`"" }
-      else { [void][Windows.MessageBox]::Show($w, 'No cleanups logged yet.', 'AI Cache Cleaner') } })
+      else { [void][Windows.MessageBox]::Show($w, 'No cleanups logged yet.', $AppName) } })
   $ui.BtnFolder.Add_Click({ Start-Process -FilePath "$env:SystemRoot\explorer.exe" -ArgumentList "`"$AppDir`"" })
   $ui.BtnHistory.Add_Click({ $ui.NavHistory.IsChecked = $true })
   $ui.SchedCard.Add_Click({ $ui.NavSettings.IsChecked = $true })

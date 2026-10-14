@@ -23,14 +23,14 @@ $ps = "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe"
    ```powershell
    & $ps -NoProfile -ExecutionPolicy Bypass -File .\ai-cache-cleaner.ps1 -Test
    ```
-3. **Install.** This copies the tool to `%USERPROFILE%\.ai-cache-cleaner`, builds `AI Cache Cleaner.exe` there and creates the desktop shortcut `AI Cache Cleaner`. It does **not** schedule anything.
+3. **Install.** This copies the tool to `%USERPROFILE%\.ai-cache-cleaner`, builds `oopSI - AI Cache Cleaner.exe` there and creates the desktop shortcut `oopSI - AI Cache Cleaner`. It does **not** schedule anything.
    ```powershell
    & $ps -NoProfile -ExecutionPolicy Bypass -File .\ai-cache-cleaner.ps1 -Install
    ```
 4. **Verify** both. Each must print `True`:
    ```powershell
-   Test-Path "$env:USERPROFILE\.ai-cache-cleaner\AI Cache Cleaner.exe"
-   Test-Path ([IO.Path]::Combine([Environment]::GetFolderPath('Desktop'), 'AI Cache Cleaner.lnk'))
+   Test-Path "$env:USERPROFILE\.ai-cache-cleaner\oopSI - AI Cache Cleaner.exe"
+   Test-Path ([IO.Path]::Combine([Environment]::GetFolderPath('Desktop'), 'oopSI - AI Cache Cleaner.lnk'))
    ```
 5. **Dry run.** This deletes nothing. Summarize the table for the user: how many GB can be freed per cache, plus the "review by hand" list of models and environments.
    ```powershell
@@ -40,7 +40,7 @@ $ps = "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe"
    ```powershell
    & $ps -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.ai-cache-cleaner\ai-cache-cleaner.ps1" -Schedule -Day Sunday -Hour 13
    ```
-7. **Tell the user** how to use it: open **AI Cache Cleaner** from the desktop, review the scan, untick anything they want kept, and click **Clean now**. Weekly auto-clean can be switched on or off any time in the app's Settings.
+7. **Tell the user** how to use it: open **oopSI - AI Cache Cleaner** from the desktop, review the scan, untick anything they want kept, and click **Clean now**. Weekly auto-clean can be switched on or off any time in the app's Settings.
 
 ## Rules
 
