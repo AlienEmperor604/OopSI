@@ -49,7 +49,7 @@ AI Cache Cleaner finds these, shows exactly what can go, and removes only what t
 
 **Option 1: download** (no git needed)
 
-1. Download `ai-cache-cleaner-v2.0.2.zip` from the [latest release](https://github.com/AlienEmperor604/OopSI/releases/latest) and extract it.
+1. Download `ai-cache-cleaner-v2.0.3.zip` from the [latest release](https://github.com/AlienEmperor604/OopSI/releases/latest) and extract it.
 2. Double-click **install.cmd**.
 3. AI Cache Cleaner opens and scans. Nothing is deleted until you click **Clean now**.
 
@@ -179,6 +179,6 @@ Never test `-Clean` on a machine whose caches you care about without a dry run f
 
 ## License
 
-[MIT](LICENSE). The bundled Inter font is licensed under the SIL Open Font License ([fonts/OFL.txt](fonts/OFL.txt)).
+[MIT](LICENSE). The bundled Lato font (Google Fonts) is licensed under the SIL Open Font License ([fonts/OFL.txt](fonts/OFL.txt)).
 
 <sub>Keywords: clean Windows AI leftovers, AI cache cleaner, free up disk space Windows 11, clear uv cache, uvx cache, MCP server cache, npm cache clean, pnpm store prune, pip cache purge, conda clean, delete old Playwright browsers, ms-playwright folder, Temp files cleanup, Claude Code, Cursor, Codex, Windsurf, developer disk cleanup.</sub>

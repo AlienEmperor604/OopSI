@@ -18,7 +18,7 @@ param([switch]$Clean, [switch]$AutoClean, [switch]$Gui, [switch]$Install, [switc
   [ValidateRange(0, 23)][int]$Hour = 13,
   [ValidateRange(1, 365)][int]$TempDays)   # default: settings.json, else 7
 
-$Version = '2.0.2'
+$Version = '2.0.3'
 if (-not $HOME) { throw 'HOME is empty; refusing to run.' }
 # ponytail: not under AppData - packaged (MSIX) apps get AppData writes silently redirected to a private copy
 $AppDir = Join-Path $HOME '.ai-cache-cleaner'
@@ -455,6 +455,7 @@ if ($Install) {
     $fonts = Join-Path $PSScriptRoot 'fonts'
     if (Test-Path -LiteralPath $fonts) {
       New-Item -ItemType Directory (Join-Path $AppDir 'fonts') -Force | Out-Null
+      Get-ChildItem -LiteralPath (Join-Path $AppDir 'fonts') -File | Remove-Item -Force -ErrorAction SilentlyContinue   # a font from an older version goes
       Get-ChildItem -LiteralPath $fonts -File | Copy-Item -Destination (Join-Path $AppDir 'fonts') -Force
     }
   }
@@ -543,7 +544,7 @@ public class CacheRow : INotifyPropertyChanged {
   <Window.Resources>
     <BooleanToVisibilityConverter x:Key="Vis"/>
     <FontFamily x:Key="Icons">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
-    <!-- Replaced by the bundled Inter (fonts\) at startup; these are the fallbacks. -->
+    <!-- Replaced by the bundled Lato (fonts\) at startup; these are the fallbacks. -->
     <FontFamily x:Key="Body">Segoe UI Variable Text, Segoe UI</FontFamily>
     <FontFamily x:Key="Display">Segoe UI Variable Display, Segoe UI</FontFamily>
     <LinearGradientBrush x:Key="Dark" StartPoint="0,0" EndPoint="0,1"><GradientStop Color="#3A3F47" Offset="0"/><GradientStop Color="#1F2329" Offset="1"/></LinearGradientBrush>
@@ -731,7 +732,7 @@ public class CacheRow : INotifyPropertyChanged {
       </ControlTemplate></Setter.Value></Setter>
     </Style>
 
-    <!-- Caps labels get Inter's capital spacing (WPF has no letter-spacing); numbers use tabular figures so columns line up. -->
+    <!-- Caps labels get the font's capital spacing (WPF has no letter-spacing); numbers use tabular figures so columns line up. -->
     <Style x:Key="Cap" TargetType="TextBlock"><Setter Property="FontSize" Value="11.5"/><Setter Property="FontWeight" Value="Medium"/><Setter Property="Foreground" Value="#6B7280"/><Setter Property="Typography.CapitalSpacing" Value="True"/></Style>
     <Style x:Key="Val" TargetType="TextBlock"><Setter Property="FontFamily" Value="{DynamicResource Display}"/><Setter Property="FontSize" Value="25"/><Setter Property="FontWeight" Value="SemiBold"/><Setter Property="Margin" Value="0,5,0,0"/><Setter Property="Typography.NumeralAlignment" Value="Tabular"/></Style>
     <Style x:Key="H2" TargetType="TextBlock"><Setter Property="FontSize" Value="16.5"/><Setter Property="FontWeight" Value="SemiBold"/></Style>
@@ -1088,13 +1089,13 @@ public class CacheRow : INotifyPropertyChanged {
   $ui = @{}; $xaml.SelectNodes('//*[@Name]') | ForEach-Object { $ui[$_.Name] = $w.FindName($_.Name) }
   $wa = [Windows.SystemParameters]::WorkArea
   $w.Height = [math]::Min(1000, $wa.Height - 40); $w.Width = [math]::Min(1320, $wa.Width - 40)
-  # Inter (Google Fonts, OFL) ships in fonts\ and loads from disk: nothing is fetched at runtime. Without it, Segoe UI.
+  # Lato (Google Fonts, OFL) ships in fonts\ and loads from disk: nothing is fetched at runtime. Without it, Segoe UI.
   $fonts = Join-Path $PSScriptRoot 'fonts\'
   # ::new, not New-Object: a ResourceDictionary would store New-Object's PSObject wrapper, which WPF rejects as a font.
   try {
-    if (Test-Path -LiteralPath (Join-Path $fonts 'Inter-Regular.ttf')) {
-      $inter = [Windows.Media.FontFamily]::new([Uri]::new($fonts), './#Inter, Segoe UI')
-      $w.Resources['Body'] = $inter; $w.Resources['Display'] = $inter
+    if (Test-Path -LiteralPath (Join-Path $fonts 'Lato-Regular.ttf')) {
+      $lato = [Windows.Media.FontFamily]::new([Uri]::new($fonts), './#Lato, Segoe UI')
+      $w.Resources['Body'] = $lato; $w.Resources['Display'] = $lato
     }
   } catch {}
   # The logo ships next to the script; without it the window falls back to the Disk Cleanup icon and a glyph.
