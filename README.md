@@ -47,7 +47,7 @@ AI Cache Cleaner finds these, shows exactly what can go, and removes only what t
 
 **Option 1: download** (no git needed)
 
-1. Download `ai-cache-cleaner-v2.0.0.zip` from the [latest release](https://github.com/AlienEmperor604/OopSI/releases/latest) and extract it.
+1. Download `ai-cache-cleaner-v2.0.1.zip` from the [latest release](https://github.com/AlienEmperor604/OopSI/releases/latest) and extract it.
 2. Double-click **install.cmd**.
 3. AI Cache Cleaner opens and scans. Nothing is deleted until you click **Clean now**.
 

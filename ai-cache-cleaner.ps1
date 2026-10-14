@@ -18,7 +18,7 @@ param([switch]$Clean, [switch]$AutoClean, [switch]$Gui, [switch]$Install, [switc
   [ValidateRange(0, 23)][int]$Hour = 13,
   [ValidateRange(1, 365)][int]$TempDays)   # default: settings.json, else 7
 
-$Version = '2.0.0'
+$Version = '2.0.1'
 if (-not $HOME) { throw 'HOME is empty; refusing to run.' }
 # ponytail: not under AppData - packaged (MSIX) apps get AppData writes silently redirected to a private copy
 $AppDir = Join-Path $HOME '.ai-cache-cleaner'
@@ -109,12 +109,16 @@ function Get-Leftovers([string]$Root) {
 
 # Top-level items of a Temp folder untouched for $Days days, including everything inside them. Links are skipped.
 function Get-OldItems([string]$Root, [int]$Days) {
-  if ([IO.Path]::GetFileName($Root.TrimEnd('\')) -ne 'Temp') { return }   # a mis-set TEMP must never point this at real files
+  # A mis-set TEMP must never point this at real files: only a folder named Temp, and never the shared Windows\Temp
+  # (an elevated run there could take other users' and services' files). Leftovers are swept only once these pass.
+  $r = $Root.TrimEnd('\')
+  if ([IO.Path]::GetFileName($r) -ne 'Temp' -or $r -eq "$env:SystemRoot\Temp") { return }
   $cut = (Get-Date).AddDays(-$Days)
   Get-ChildItem -LiteralPath $Root -Force -ErrorAction SilentlyContinue | Where-Object {
     -not (Test-Link $_) -and $_.LastWriteTime -lt $cut -and -not ($_.PSIsContainer -and
       (Get-Tree $_.FullName | Where-Object { $_.LastWriteTime -ge $cut } | Select-Object -First 1))
   } | ForEach-Object FullName
+  Get-Leftovers $Root
 }
 
 # Playwright browser builds no installed Playwright needs. Every install registers its package in .links, and the builds
@@ -201,14 +205,20 @@ function Read-Log([string]$Path) {
   if (-not (Test-Path -LiteralPath $Path)) { return }
   foreach ($l in [IO.File]::ReadAllLines($Path)) {
     if ($l -match '^(\d{4}-\d\d-\d\d \d\d:\d\d)\s+freed ([\d.]+) GB(?:\s+items (\d+))?(?:\s+(manual|auto))?') {
-      [pscustomobject]@{ Date = [datetime]::ParseExact($matches[1], 'yyyy-MM-dd HH:mm', [cultureinfo]::InvariantCulture)
-        FreedGB = [double]::Parse($matches[2], [cultureinfo]::InvariantCulture); Items = $matches[3]; Mode = $matches[4] }
+      try {   # a damaged line (impossible date, '1.2.3') is skipped, not a reason for the app to crash
+        [pscustomobject]@{ Date = [datetime]::ParseExact($matches[1], 'yyyy-MM-dd HH:mm', [cultureinfo]::InvariantCulture)
+          FreedGB = [double]::Parse($matches[2], [cultureinfo]::InvariantCulture); Items = $matches[3]; Mode = $matches[4] }
+      } catch {}
     }
   }
 }
 
 # Scans every target and, with $Clean, cleans the ones not in $Skip. $Report receives progress events for the app window.
 function Invoke-Cleaner([bool]$Clean, [int]$TempDays, [string[]]$Skip, [string]$LogPath, [string]$Mode = 'manual', [scriptblock]$Report = {}) {
+  # Every target path is built from these; an empty one would turn "$env:LOCALAPPDATA\npm-cache" into a path off the drive root.
+  foreach ($v in 'SystemRoot', 'LOCALAPPDATA', 'USERPROFILE', 'TEMP') {
+    if (-not [IO.Path]::IsPathRooted([Environment]::GetEnvironmentVariable($v))) { throw "$v is not set; refusing to run." }
+  }
   $mutex = $null
   if ($Clean) {
     # One cleanup at a time (app, command line and weekly task). A mutex left behind by a crashed run counts as ours.
@@ -231,7 +241,7 @@ function Invoke-Cleaner([bool]$Clean, [int]$TempDays, [string[]]$Skip, [string]$
       @{ Key = 'pip'; Name = 'pip cache'; Paths = { "$L\pip\cache" }; Exe = 'pip'; Args = 'cache', 'purge' }
       @{ Key = 'conda'; Name = 'conda package cache'; Exe = $conda; Args = 'clean', '--tarballs', '--index-cache', '--logfiles', '-y'
         Paths = { foreach ($d in $condaPkgs) { Get-ChildItem -LiteralPath $d -File -Force -ErrorAction SilentlyContinue | Where-Object Name -match '\.(conda|tar\.bz2)$' | ForEach-Object FullName; "$d\cache" } } }
-      @{ Key = 'temp'; Name = "Temp files untouched $TempDays+ days"; Paths = { @(Get-OldItems $env:TEMP $TempDays) + @(Get-Leftovers $env:TEMP) | Select-Object -Unique } }
+      @{ Key = 'temp'; Name = "Temp files untouched $TempDays+ days"; Paths = { Get-OldItems $env:TEMP $TempDays | Select-Object -Unique } }
       @{ Key = 'playwright'; Name = 'Playwright browsers no project uses'; Paths = { Get-PlaywrightStale "$L\ms-playwright" } }
     )
     $n = $targets.Count; $total = [int64]0; $count = 0
@@ -383,9 +393,11 @@ if ($Test) {
     & $file "$tp\busy\new.txt" 0; & $dir "$tp\busy" 9      # old dir, fresh file inside -> keep
     & $file "$tp\stale\old.txt" 9; & $dir "$tp\stale" 9    # everything old -> clean
     & $file "$tp\old.txt" 9; & $file "$tp\new.txt" 0
-    & $expect 'temp' (Get-OldItems $tp 7) 'old.txt', 'stale'
-    & $file "$t\NotTemp\old.txt" 9
+    & $dir "$tp\left.aicc-del" 0                            # a fresh leftover from an unfinished run -> clean
+    & $expect 'temp' (Get-OldItems $tp 7) 'old.txt', 'stale', 'left.aicc-del'
+    & $file "$t\NotTemp\old.txt" 9; & $dir "$t\NotTemp\left.aicc-del" 0
     & $expect 'temp outside a folder named Temp' (Get-OldItems "$t\NotTemp" 7) @()
+    & $expect 'temp under Windows' (Get-OldItems "$env:SystemRoot\Temp\" 0) @()
     & $dir "$t\links\Temp\real"; New-Item -ItemType Junction -Path "$t\links\Temp\link" -Target "$t\keep" | Out-Null
     & $expect 'temp with a junction' (Get-OldItems "$t\links\Temp" 0) 'real'
 
@@ -408,7 +420,7 @@ if ($Test) {
     Save-Settings $sp @{ skip = @('pip'); tempDays = 14 }; $s = Get-Settings $sp
     & $check 'settings round-trip' ((@($s.skip) -join ',') -eq 'pip' -and $s.tempDays -eq 14)
     $lp = "$t\clean.log"
-    [IO.File]::WriteAllLines($lp, [string[]]@('2026-01-04 13:00  freed 1.50 GB', 'garbage'))
+    [IO.File]::WriteAllLines($lp, [string[]]@('2026-01-04 13:00  freed 1.50 GB', 'garbage', '2026-13-45 13:00  freed 9.99 GB'))
     Write-LogLine $lp ([int64](0.25 * 1GB)) 12 'auto'
     $runs = @(Read-Log $lp)
     & $check 'log reads v1 and v2 lines' ($runs.Count -eq 2 -and $runs[0].Date.Hour -eq 13 -and $runs[1].Mode -eq 'auto' -and $runs[1].Items -eq '12' -and

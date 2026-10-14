@@ -18,7 +18,7 @@ A step-by-step walkthrough: installing, reading the scan, cleaning, scheduling, 
 You need Windows 10 or 11. Windows PowerShell 5.1 and .NET Framework 4.x are already part of Windows. You don't need admin rights or an internet connection.
 
 **From the release zip**
-1. Download `ai-cache-cleaner-v2.0.0.zip` from the [Releases page](https://github.com/AlienEmperor604/OopSI/releases/latest).
+1. Download `ai-cache-cleaner-v2.0.1.zip` from the [Releases page](https://github.com/AlienEmperor604/OopSI/releases/latest).
 2. Right-click the zip, choose **Extract All**, and open the extracted `ai-cache-cleaner` folder.
 3. Double-click **install.cmd**.
 
