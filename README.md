@@ -17,13 +17,10 @@
   <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-6B7280"></a>
 </p>
 
-<p align="center">
-  <img src="docs/screenshots/home.png" alt="AI Cache Cleaner home screen: disk usage, 28.95 GB of AI and developer caches found, scan complete" width="860">
-</p>
+https://github.com/user-attachments/assets/34270ec8-e9e3-4791-a1f4-4b23be0c26c8
 
 <p align="center">
-  <a href="https://github.com/AlienEmperor604/OopSI/releases/download/v2.0.1/oopsi-launch.mp4"><img src="docs/launch-thumb.png" alt="OopSI launch video: found 28.95 GB of AI leftovers" width="560"></a><br>
-  <a href="https://github.com/AlienEmperor604/OopSI/releases/download/v2.0.1/oopsi-launch.mp4"><b>Watch the 60-second intro</b></a>
+  <img src="docs/screenshots/home.png" alt="AI Cache Cleaner home screen: disk usage, 28.95 GB of AI and developer caches found, scan complete" width="860">
 </p>
 
 ## Why your C: drive fills up when you use AI tools
