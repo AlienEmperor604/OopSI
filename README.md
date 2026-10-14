@@ -21,6 +21,11 @@
   <img src="docs/screenshots/home.png" alt="AI Cache Cleaner home screen: disk usage, 28.95 GB of AI and developer caches found, scan complete" width="860">
 </p>
 
+<p align="center">
+  <a href="https://github.com/AlienEmperor604/OopSI/releases/download/v2.0.1/oopsi-launch.mp4"><img src="docs/launch-thumb.png" alt="OopSI launch video: found 28.95 GB of AI leftovers" width="560"></a><br>
+  <a href="https://github.com/AlienEmperor604/OopSI/releases/download/v2.0.1/oopsi-launch.mp4"><b>Watch the 60-second intro</b></a>
+</p>
+
 ## Why your C: drive fills up when you use AI tools
 
 AI coding tools and MCP servers quietly leave regenerable caches behind:
